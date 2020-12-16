@@ -1,0 +1,301 @@
+import csv
+import os
+
+def isfloat(string):
+    #this function came from a suggestion on stack overflow and is not original work
+    '''function: isfloat
+    parameters: string
+    return: true if it is a float, false if not.
+    '''
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+class Patient:
+    '''class: patient
+    attributes: first name, last name, file name
+    Methods: new_patient_file, new_date, get_column, plot_graph, __str__
+    '''
+
+    def __init__(self, last_name, first_name):
+        self.last_name = last_name
+        self.first_name = first_name
+        self.filename = self.last_name + "_" + self.first_name + ".csv"
+
+    def new_patient_file(self):
+        '''method: new patient
+        parameters: user input
+        return: creates a file for new patient and adds first row
+        '''
+        # should be tied to object name
+        # write new patient name into patient list file
+        try:
+            if os.path.isdir(self.filename):
+                print("That is not a file.")
+            f = open(self.filename, "w")
+            f.write("date,temp,rating,test")
+            #while loop allows the user the option to keep entering rows to csv file
+            while_loop = 1
+            while while_loop == 1:
+                #DATE:
+                date = input("Please enter the date of your data: (e.g. dec 1)") #need to code defensively still
+
+                #TEMP: makes sure temp is numeric before converting it to a float
+                temp = -1.0
+                while temp < 0:
+                    temp_input = input("Please enter the patient temperature:")
+                    if isfloat(temp_input):
+                        temp = float(temp_input)
+                if temp <= 0: #raise value error if temp is out of range
+                    raise ValueError("temp should be a positive float")
+
+                #RATE: makes sure rate is numeric before converting to an int
+                rate = -1
+                while rate < 0:
+                    rate_input = input("Please enter the patient rating: (1 - 10)")
+                    if rate_input.isnumeric():
+                        rate = int(rate_input)
+                if rate <= 0 or rate > 10: #raise value error if rate is out of range
+                    raise ValueError("rate should be an integer between 1 and 10")  # error raised
+
+                #TEST:
+                test_input = str(input("If the patient took a test on this date, enter T for positive, F for negative, or N for no test."))
+                test = test_input.upper()
+                while test != 'T' and test != 'F' and test != 'N':
+                    test = input("That was not a valid option. Please input from (T, F, N)")
+
+                #write to file
+                f.write('\n' + str(date) + ',' + str(temp) + ',' + str(rate) + ',' + str(test))
+                print("You have added the following input: date:", date, " patient temperature:", temp, " rating:", rate, " test:", test)
+                value = input("Would you like to enter information for another date? (y/n)")
+                if value == 'n':
+                    while_loop = 0
+        except PermissionError:
+            print("You do not have permission to use that file.")
+        except OSError:
+            print("Something happened while writing to the file:", self.filename)
+        f.close()
+
+    def new_date(self):
+        '''method: new date
+        parameters: user input
+        return: creates new row in file for patient
+        '''
+        date = str(input("What is the date? (example: dec 1)")) #need to code defensively still
+
+        # TEMP: makes sure temp is numeric before converting it to a float
+        temp = -1.0
+        while temp < 0:
+            temp_input = input("Please enter the patient temperature:")
+            if isfloat(temp_input):
+                temp = float(temp_input)
+        if temp <= 0: #raise value error if temp is out of range
+            raise ValueError("temp should be a positive float")
+
+        # RATE: makes sure rate is numeric before converting to an int
+        rate = -1
+        while rate < 0:
+            rate_input = input("Please enter the patient rating: (1 - 10)")
+            if rate_input.isnumeric():
+                rate = int(rate_input)
+        if rate <= 0 or rate > 10: #raise value error if rate is out of range
+            raise ValueError("rate should be an integer between 1 and 10") #error raised
+
+        #TEST:
+        test_input = str(input("If the patient took a test on this date, enter T for positive, F for negative, or N for no test."))
+        test = test_input.upper()
+        while test != 'T' and test != 'F' and test != 'N':
+            test = input("That was not a valid option. Please input from (T, F, N)") #input validated
+
+        #write to file and close
+        try:
+            if os.path.isdir(self.filename):
+                print("That is not a file.")
+            f = open(self.filename, 'a')
+            f.write('\n' + str(date) + ',' + str(temp) + ',' + str(rate) + ',' + str(test))
+        except PermissionError:
+            print("You do not have permission to use that file.")
+        except OSError:
+            print("Something happened while writing to the file:", self.filename)
+        f.close()
+        print("You have added the following input: date:", date, " patient temperature:", temp, " rating:", rate,
+              " test:", test)
+
+    def get_column(self, column_name):
+        '''method: return column
+        parameters: user input column name (date, temp, rate, test)
+        return: column as a list
+        '''
+        try:
+            if os.path.isdir(self.filename):
+                print("That is not a file.")
+            with open(self.filename, 'r') as file:
+                data = csv.DictReader(file)
+                return_list = []
+                for line in data:
+                    return_list.append(line[column_name])
+            return return_list
+        except PermissionError:
+            print("You do not have permission to use that file.")
+        except OSError:
+            print("Something happened while writing to the file:", self.filename)
+
+    def plot_graph(self):
+        '''function: plot_graph
+        parameters: user input from patient for plot points (date, temp, rate, test)
+        return: graph
+        '''
+        import matplotlib.pyplot as plt
+        x_label = str(input('What is on the x axis?'))
+        while x_label != 'date' and x_label != 'temp' and x_label != 'rate' and x_label != 'test':
+            x_label = input("That was not a valid option. Please input from (date, temp, rate, test)")
+        x_list = self.get_column(x_label)
+        y_label = str(input('Now we need y values:'))
+        while y_label != 'date' and y_label != 'temp' and y_label != 'rate' and y_label != 'test':
+            y_label = input("That was not a valid option. Please input from (date, temp, rate, test)")
+        y_list = self.get_column(y_label)
+        title = str(input('What is the graph title?'))
+        x = x_list
+        y = y_list
+        plt.scatter(x, y)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.title(title)
+        plt.show()
+
+    def __str__(self):
+        try:
+            if os.path.isdir(self.filename):
+                print("That is not a file.")
+            input = open(self.filename, 'r')
+            content = input.read()
+            input.close()
+            output = "First name:" + self.first_name + " Last name:" + self.last_name + "\n" + "Filename:" + self.filename + "\n" + content
+            return output
+        except PermissionError:
+            print("You do not have permission to use that file.")
+        except OSError:
+            print("Something happened while writing to the file:", self.filename)
+
+
+
+    #rest of code starts here
+
+def edit_data_menu():
+    '''function: edit_data_menu
+    parameters: none
+    return: print menu and invoke chosen responses
+    '''
+    menu_choice = input("PLease select one of the options: \n"
+                        "1. New patient \n" #can create a new patient file
+                        "2. New date for patient \n" #can enter a new row for individual patient
+                        "3. Quit \n")
+    while menu_choice != "1" and menu_choice != "2" and menu_choice != "3":
+        menu_choice = input("That was not a valid option. Please choose 1, 2, or 3: \n"
+                            "1. New patient \n"  
+                            "2. New date for patient \n"  
+                            "3. Quit \n")
+    if menu_choice == '1':
+        last = input("Patient's last name?")
+        if last.isnumeric() or isfloat(last):
+            raise TypeError("'last' must be alphabetic")
+        lower_last = last.lower()  # convert to lowercase
+        first = input("Patient's first name?")
+        if first.isnumeric() or isfloat(first):
+            raise TypeError("'first' must be alphabetic")
+        lower_first = first.lower()  # convert to lowercase
+        patient = Patient(lower_last, lower_first)  # creating a new instance of the patient object
+        print("You have inputted a patient named:", patient.first_name, patient.last_name)
+        patient.new_patient_file() #creates a file for this patient
+    elif menu_choice == '2':
+        last = input("Patient's last name?")
+        if last.isnumeric() or isfloat(last):
+            raise TypeError("'last' must be alphabetic")
+        lower_last = last.lower()  # convert to lowercase
+        first = input("Patient's first name?")
+        if first.isnumeric() or isfloat(first):
+            raise TypeError("'first' must be alphabetic")
+        lower_first = first.lower()  # convert to lowercase
+        patient = Patient(lower_last, lower_first)
+        #search for csv to see if file exists before calling function. if it exists, call 'patient.new_date()' if it doesn't call 'patient.new_patient_file()'
+        patient.new_date()
+    elif menu_choice == '3':
+        return None
+
+def display_data_menu():
+    '''function: display_data_menu
+        parameters: none
+        return: print menu and invoke chosen responses
+    '''
+    menu_choice = input("PLease select one of the options: \n"
+                        "1. Display graph \n"  #displays graph
+                        "2. Display text \n"  #displays text
+                        "3. Quit \n")
+    while menu_choice != "1" and menu_choice != "2" and menu_choice != "3":
+        menu_choice = input("That was not a valid option. Please choose 1, 2, or 3: \n"
+                            "1. Display graph \n"  
+                            "2. Display text \n"  
+                            "3. Quit \n")
+    if menu_choice == '1':
+        last = input("Patient's last name?")
+        if last.isnumeric() or isfloat(last):
+            raise TypeError("'last' must be alphabetic")
+        lower_last = last.lower()  # convert to lowercase
+        first = input("Patient's first name?")
+        if first.isnumeric() or isfloat(first):
+            raise TypeError("'first' must be alphabetic")
+        lower_first = first.lower()  # convert to lowercase
+        patient = Patient(lower_last, lower_first)
+        patient.plot_graph()
+    elif menu_choice == '2':
+        last = input("Patient's last name?")
+        if last.isnumeric() or isfloat(last):
+            raise TypeError("'last' must be alphabetic")
+        lower_last = last.lower()  # convert to lowercase
+        first = input("Patient's first name?")
+        if first.isnumeric() or isfloat(first):
+            raise TypeError("'first' must be alphabetic")
+        lower_first = first.lower()  # convert to lowercase
+        patient = Patient(lower_last, lower_first)
+        print(patient.__str__())
+    elif menu_choice == '3':
+        return None
+
+def main_menu():
+    '''function: main menu
+    parameters: none
+    return: user chooses next function
+    '''
+    menu_choice = input("PLease select one of the options: \n"
+                        "1. Edit data \n"
+                        "2. Display data \n"
+                        "3. Quit \n")
+    while menu_choice != "1" and menu_choice != "2" and menu_choice != "3":
+        menu_choice = input("That was not a valid option. Please choose 1, 2, or 3: \n"
+                            "1. Edit data \n"  
+                            "2. Display data \n"  
+                            "3. Quit \n")
+    if menu_choice == '1':
+        edit_data_menu()
+    elif menu_choice == '2':
+        display_data_menu()
+    elif menu_choice == '3':
+        print("Thank you, and goodbye!")  # end program
+        return
+    choice = input('Are you sure you want to quit? (y/n)')
+    if 'n' in choice:
+        main_menu()
+    else:
+        return
+
+def main():
+    try:
+        main_menu()
+    except TypeError as ex:
+        print("Invalid type:", ex)
+    except ValueError as ex:
+        print("Invalid value", ex)
+    #path errors for csv files
+main()
